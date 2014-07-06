@@ -1,4 +1,5 @@
 /* TO-DO IN PROGRESS
+ * Write bluetooth function.
  * Complete functions getPanoPref, getRtvPref, getTimelapsePref and getTrigPref. See variable documentation and code for getMode. 
  * Other functions you will need:
  * Horizontal Panorama algorithm
@@ -13,6 +14,7 @@
  * Take picture function (pass HDR pref info to know # of shots)
  * Bluetooth connection function? Specify bluetooth info? 
  * Reminders function (make sure manual focus, if using timelapse, flip servo switch, etc.)
+ * Write preferences function for bluetooth? (ie. connection settings if needed?). If so, update getModePref case #4
  */
 
 /***************************************************************************
@@ -83,7 +85,7 @@ void loop() {
   buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
 
   //DECLARING & INITIALIZING VARIABLES
-  int mode = 0; //stores user desired mode, 1 2 3 4 or 5. panorama, HDR, rtv, timelapse, triggers
+  int mode = 0; //stores user desired mode, 1 2 3 4 5 or 6. panorama, HDR, rtv, BT, timelapse, triggers
   int modePref = 0; //stores user specified preferences for chosen mode
 
   //LAUNCH SPLASH SCREEN
@@ -169,7 +171,7 @@ int getMode(){
   boolean loopcontrol = 0; //value for select button loop control
   int lrTrack = 1; //tracks left/right clicks, possible values 1 2 3
   int udTrack = 1; //tracks up/down clicks, 1 top row 2 bottom row 
-  int mode = 1; //returns user selected mode (values 1 2 3 4 5)
+  int mode = 1; //returns user selected mode (values 1 2 3 4 5 6)
 
   //PRINTING SCREEN NAME (SELECT MODE)
   lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
@@ -181,7 +183,7 @@ int getMode(){
 
   //PRINTING MODE OPTIONS TO LCD
   lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
-  lcd.print("PANO  HDR  RTV");
+  lcd.print("PANO HDR RTV BT");
   lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
   lcd.print("TIMELAPSE  TRIG"); //prints to LCD
 
@@ -191,7 +193,7 @@ int getMode(){
 
     //BUTTON TRACKING
     //right button tracking
-    if(((buttons & BUTTON_RIGHT)>0) & ((lrTrack < 3)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+    if(((buttons & BUTTON_RIGHT)>0) & ((lrTrack < 4)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
       lrTrack ++; //increment lrTrack by 1 
       while(((buttons & BUTTON_RIGHT)>0) == 1){ //WAITS UNTIL RIGHT BUTTON RELEASED (otherwise future loops may register button!)
         buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
@@ -228,12 +230,16 @@ int getMode(){
         mode = 1; //mode 1, pano
         break;
       case 2: //executes if lrTrack = 2
-        lcd.setCursor(6, 0); //sets cursor to column 6, line 0 (hdr)
+        lcd.setCursor(5, 0); //sets cursor to column 5, line 0 (hdr)
         mode = 2; //mode 2, hdr
         break;
       case 3: //executes if lrTrack = 3
-        lcd.setCursor(11, 0); //sets cursor to column 11, line 0 (rtv)
+        lcd.setCursor(9, 0); //sets cursor to column 9, line 0 (rtv)
         mode = 3; //mode 3, rtv
+        break;
+      case 4: //executes if lrTrack = 4
+        lcd.setCursor(13, 0); //sets cursor to column 13, line 0 (bt)
+        mode = 4; //mode 4, bt
         break;
       }
     }
@@ -241,11 +247,15 @@ int getMode(){
       switch (lrTrack) { //comparing case values with lrTrack
       case 3: //executes if lrTrack = 3
         lcd.setCursor(11, 1); //sets cursor to column 11, line 1 (trig)
-        mode = 5; //mode 5, trig
+        mode = 6; //mode 6, trig
+        break;
+      case 4: //executes if lrTrack = 4
+        lcd.setCursor(11, 1); //sets cursor to column 11, line 1 (trig)
+        mode = 6; //mode 6, trig
         break;
       default: //executes if lrTrack = 1 or 2
         lcd.setCursor(0, 1); //sets cursor to column 0, line 1 (timelapse)
-        mode = 4; //mode 4, timelapse
+        mode = 5; //mode 5, timelapse
         break;
       }
     }
@@ -294,10 +304,13 @@ int getModePref(int mode){
   case 3: //executes if mode 3, rtv
     modePref = getRtvPref(); //get rtv pref
     break;
-  case 4: //executes if mode 4, timelapse
+  case 4: //executes if mode 4, bt
+    modePref = 4; //bluetooth function indicated, no preferences required
+    break;
+  case 5: //executes if mode 4, timelapse
     modePref = getTimelapsePref(); //get timelapse pref
     break;
-  case 5: //executes if mode 5, trig
+  case 6: //executes if mode 5, trig
     modePref = getTrigPref(); //get trig pref
     break;
   }
@@ -389,6 +402,7 @@ int getTrigPref(){
 
   return(modePref); //returns trig preferences user requested to calling function
 }
+
 
 
 
