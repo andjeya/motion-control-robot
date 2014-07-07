@@ -97,11 +97,16 @@ void loop() {
   //TESTING MODE DISPLAY DELETE!
   lcd.clear(); //clears LCD DELETE
   lcd.print(mode); //DELETE
-  delay(5000); //DELETE!
+  delay(500); //DELETE!
 
   //GET MODE PREFERENCES
   modePref = getModePref(mode); //passes desired mode to function to get preferences for that mode
 
+  //TESTING MODEPREF DISPLAY DELETE!
+  lcd.clear(); //clears LCD DELETE
+  lcd.print("mode pref "); //DELETE
+  lcd.print(modePref); //DELETE
+  delay(500); //DELETE!
 }
 
 /***************************************************************************
@@ -260,6 +265,7 @@ int getMode(){
       }
     }
 
+    //STOPPING LOOP
     if(buttons & BUTTON_SELECT) { //runs if ANY button is pressed AND BUTTON _SELECT = 1
       buttons = lcd.readButtons(); //update state of pressed buttons. 1 if ANY button pressed, 0 if not. 
       while((buttons & BUTTON_SELECT) == 1){ //WAITS UNTIL SELECT BUTTON RELEASED (otherwise future loops may register select button!)
@@ -294,7 +300,7 @@ int getModePref(int mode){
   int modePref = 0; //stores value indicating preferences for mode chosen by user, is returned to calling function
 
   //LAUNCH PROPER GET MODE PREFERENCES FUNCTION
-  switch (modePref) { //comparing case values with lrTrack
+  switch (mode) { //comparing case values with lrTrack
   case 1: //executes if mode 1, pano
     modePref = getPanoPref(); //get panorama pref
     break;
@@ -331,11 +337,73 @@ int getModePref(int mode){
  *     information will be requested later, right before the program runs. See variable documentation.
  ***************************************************************************/
 int getPanoPref(){
+  //INITIAL SETUP
+  uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
+  lcd.clear(); //clears LCD
+  lcd.setBacklight(WHITE); //white backlight
+  buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+
   //DECLARING & INITIALIZING VARIABLES
+  boolean loopcontrol = 0; //value for select button loop control
+  int lrTrack = 1; //tracks left/right clicks, possible values 1 2 3
   int modePref = 0; //stores value indicating preferences for mode chosen by user, is returned to calling function
 
-  //WRITE CODE TO GET PREFERENCES HERE
+  //PRINTING PANORAMA OPTIONS TO LCD
+  lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+  lcd.print("PANORAMA OPTIONS");
+  lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+  lcd.print("HRZ VRT BRENZIER"); //prints to LCD
 
+  //INPUT LOOP - WAITING FOR SELECT BUTTON PRESS AND RELEASE
+  while(loopcontrol == 0){ //runs while select button not pressed
+    buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.  
+
+    //BUTTON TRACKING
+    //right button tracking
+    if(((buttons & BUTTON_RIGHT)>0) & ((lrTrack < 3)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack ++; //increment lrTrack by 1 
+      while(((buttons & BUTTON_RIGHT)>0) == 1){ //WAITS UNTIL RIGHT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //left button tracking
+    if(((buttons & BUTTON_LEFT)>0) & ((lrTrack > 1)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack --; //decrement by 1
+      while(((buttons & BUTTON_LEFT)>0) == 1){ //WAITS UNTIL LEFT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+
+    //SELECTING MODE
+    lcd.blink(); //blink cursor throughout entire program
+    switch (lrTrack) { //comparing case values with lrTrack
+    case 1: //executes if lrTrack = 1
+      lcd.setCursor(0, 1); //sets cursor to column 0, line 1 (hrz)
+      modePref = 1; //mode 1, standard horizontal panorama
+      break;
+    case 2: //executes if lrTrack = 2
+      lcd.setCursor(4, 1); //sets cursor to column 5, line 1 (vrt)
+      modePref = 2; //mode 2, standard vertical panorama
+      break;
+    case 3: //executes if lrTrack = 3
+      lcd.setCursor(8, 1); //sets cursor to column 9, line 1 (brenzier)
+      modePref = 3; //mode 3, brenzier panorama
+      break;
+    }
+
+    //STOPPING LOOP
+    if(buttons & BUTTON_SELECT) { //runs if ANY button is pressed AND BUTTON _SELECT = 1
+      buttons = lcd.readButtons(); //update state of pressed buttons. 1 if ANY button pressed, 0 if not. 
+      while((buttons & BUTTON_SELECT) == 1){ //WAITS UNTIL SELECT BUTTON RELEASED (otherwise future loops may register select button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      } 
+      loopcontrol = 1; //stops loop 
+    }
+  }
+
+  //WRAPPING UP
+  lcd.clear(); //clears LCD
+  lcd.noBlink(); //stop blinking!
   return(modePref); //returns panorama preferences user requested to calling function
 }
 
@@ -352,12 +420,70 @@ int getPanoPref(){
  *     later, right before the program runs. See variable documentation.
  ***************************************************************************/
 int getRtvPref(){
+//INITIAL SETUP
+  uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
+  lcd.clear(); //clears LCD
+  lcd.setBacklight(WHITE); //white backlight
+  buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+
   //DECLARING & INITIALIZING VARIABLES
+  boolean loopcontrol = 0; //value for select button loop control
+  int lrTrack = 1; //tracks left/right clicks, possible values 1 2 3
   int modePref = 0; //stores value indicating preferences for mode chosen by user, is returned to calling function
 
-  //WRITE CODE TO GET PREFERENCES HERE
+  //PRINTING PANORAMA OPTIONS TO LCD
+  lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+  lcd.print("RTV OPTIONS");
+  lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+  lcd.print("STRAIGHT  CURVE"); //prints to LCD
 
-  return(modePref); //returns rtv preferences user requested to calling function
+  //INPUT LOOP - WAITING FOR SELECT BUTTON PRESS AND RELEASE
+  while(loopcontrol == 0){ //runs while select button not pressed
+    buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.  
+
+    //BUTTON TRACKING
+    //right button tracking
+    if(((buttons & BUTTON_RIGHT)>0) & ((lrTrack < 2)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack ++; //increment lrTrack by 1 
+      while(((buttons & BUTTON_RIGHT)>0) == 1){ //WAITS UNTIL RIGHT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //left button tracking
+    if(((buttons & BUTTON_LEFT)>0) & ((lrTrack > 1)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack --; //decrement by 1
+      while(((buttons & BUTTON_LEFT)>0) == 1){ //WAITS UNTIL LEFT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+
+    //SELECTING MODE
+    lcd.blink(); //blink cursor throughout entire program
+    switch (lrTrack) { //comparing case values with lrTrack
+    case 1: //executes if lrTrack = 1
+      lcd.setCursor(0, 1); //sets cursor to column 0, line 1 (straight)
+      modePref = 10; //mode 10, real time video straight
+      break;
+    case 2: //executes if lrTrack = 2
+      lcd.setCursor(10, 1); //sets cursor to column 10, line 1 (curve)
+      modePref = 11; //mode 11, real time video straight
+      break;
+    }
+
+    //STOPPING LOOP
+    if(buttons & BUTTON_SELECT) { //runs if ANY button is pressed AND BUTTON _SELECT = 1
+      buttons = lcd.readButtons(); //update state of pressed buttons. 1 if ANY button pressed, 0 if not. 
+      while((buttons & BUTTON_SELECT) == 1){ //WAITS UNTIL SELECT BUTTON RELEASED (otherwise future loops may register select button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      } 
+      loopcontrol = 1; //stops loop 
+    }
+  }
+
+  //WRAPPING UP
+  lcd.clear(); //clears LCD
+  lcd.noBlink(); //stop blinking!
+  return(modePref); //returns real time video preferences user requested to calling function
 }
 
 /***************************************************************************
@@ -374,11 +500,69 @@ int getRtvPref(){
  *     info on duration, speed, etc. See variable documentation.
  ***************************************************************************/
 int getTimelapsePref(){
+//INITIAL SETUP
+  uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
+  lcd.clear(); //clears LCD
+  lcd.setBacklight(WHITE); //white backlight
+  buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+
   //DECLARING & INITIALIZING VARIABLES
+  boolean loopcontrol = 0; //value for select button loop control
+  int lrTrack = 1; //tracks left/right clicks, possible values 1 2 3
   int modePref = 0; //stores value indicating preferences for mode chosen by user, is returned to calling function
 
-  //WRITE CODE TO GET PREFERENCES HERE
+  //PRINTING PANORAMA OPTIONS TO LCD
+  lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+  lcd.print("TMLAPSE OPTIONS");
+  lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+  lcd.print("STRAIGHT  CURVE"); //prints to LCD
 
+  //INPUT LOOP - WAITING FOR SELECT BUTTON PRESS AND RELEASE
+  while(loopcontrol == 0){ //runs while select button not pressed
+    buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.  
+
+    //BUTTON TRACKING
+    //right button tracking
+    if(((buttons & BUTTON_RIGHT)>0) & ((lrTrack < 2)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack ++; //increment lrTrack by 1 
+      while(((buttons & BUTTON_RIGHT)>0) == 1){ //WAITS UNTIL RIGHT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //left button tracking
+    if(((buttons & BUTTON_LEFT)>0) & ((lrTrack > 1)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack --; //decrement by 1
+      while(((buttons & BUTTON_LEFT)>0) == 1){ //WAITS UNTIL LEFT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+
+    //SELECTING MODE
+    lcd.blink(); //blink cursor throughout entire program
+    switch (lrTrack) { //comparing case values with lrTrack
+    case 1: //executes if lrTrack = 1
+      lcd.setCursor(0, 1); //sets cursor to column 0, line 1 (straight)
+      modePref = 14; //mode 14, timelapse straight
+      break;
+    case 2: //executes if lrTrack = 2
+      lcd.setCursor(10, 1); //sets cursor to column 10, line 1 (curve)
+      modePref = 15; //mode 15, timelapse straight
+      break;
+    }
+
+    //STOPPING LOOP
+    if(buttons & BUTTON_SELECT) { //runs if ANY button is pressed AND BUTTON _SELECT = 1
+      buttons = lcd.readButtons(); //update state of pressed buttons. 1 if ANY button pressed, 0 if not. 
+      while((buttons & BUTTON_SELECT) == 1){ //WAITS UNTIL SELECT BUTTON RELEASED (otherwise future loops may register select button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      } 
+      loopcontrol = 1; //stops loop 
+    }
+  }
+
+  //WRAPPING UP
+  lcd.clear(); //clears LCD
+  lcd.noBlink(); //stop blinking!
   return(modePref); //returns timelapse preferences user requested to calling function
 }
 
@@ -395,13 +579,68 @@ int getTimelapsePref(){
  *     later, right before the program runs. See variable documentation.
  ***************************************************************************/
 int getTrigPref(){
+//INITIAL SETUP
+  uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
+  lcd.clear(); //clears LCD
+  lcd.setBacklight(WHITE); //white backlight
+  buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+
   //DECLARING & INITIALIZING VARIABLES
+  boolean loopcontrol = 0; //value for select button loop control
+  int lrTrack = 1; //tracks left/right clicks, possible values 1 2 3
   int modePref = 0; //stores value indicating preferences for mode chosen by user, is returned to calling function
 
-  //WRITE CODE TO GET PREFERENCES HERE
+  //PRINTING PANORAMA OPTIONS TO LCD
+  lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+  lcd.print("TRIGGER OPTIONS");
+  lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+  lcd.print("LIGHTING"); //prints to LCD
 
-  return(modePref); //returns trig preferences user requested to calling function
+  //INPUT LOOP - WAITING FOR SELECT BUTTON PRESS AND RELEASE
+  while(loopcontrol == 0){ //runs while select button not pressed
+    buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.  
+
+    //BUTTON TRACKING
+    //right button tracking
+    if(((buttons & BUTTON_RIGHT)>0) & ((lrTrack < 1)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack ++; //increment lrTrack by 1 
+      while(((buttons & BUTTON_RIGHT)>0) == 1){ //WAITS UNTIL RIGHT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //left button tracking
+    if(((buttons & BUTTON_LEFT)>0) & ((lrTrack > 1)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack --; //decrement by 1
+      while(((buttons & BUTTON_LEFT)>0) == 1){ //WAITS UNTIL LEFT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+
+    //SELECTING MODE
+    lcd.blink(); //blink cursor throughout entire program
+    switch (lrTrack) { //comparing case values with lrTrack
+    case 1: //executes if lrTrack = 1
+      lcd.setCursor(0, 1); //sets cursor to column 0, line 1 (straight)
+      modePref = 7; //mode 7, lightning trigger
+      break;
+    }
+
+    //STOPPING LOOP
+    if(buttons & BUTTON_SELECT) { //runs if ANY button is pressed AND BUTTON _SELECT = 1
+      buttons = lcd.readButtons(); //update state of pressed buttons. 1 if ANY button pressed, 0 if not. 
+      while((buttons & BUTTON_SELECT) == 1){ //WAITS UNTIL SELECT BUTTON RELEASED (otherwise future loops may register select button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      } 
+      loopcontrol = 1; //stops loop 
+    }
+  }
+
+  //WRAPPING UP
+  lcd.clear(); //clears LCD
+  lcd.noBlink(); //stop blinking!
+  return(modePref); //returns trigger preferences user requested to calling function
 }
+
 
 
 
