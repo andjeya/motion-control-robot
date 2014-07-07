@@ -87,6 +87,8 @@ void loop() {
   //DECLARING & INITIALIZING VARIABLES
   int mode = 0; //stores user desired mode, 1 2 3 4 5 or 6. panorama, HDR, rtv, BT, timelapse, triggers
   int modePref = 0; //stores user specified preferences for chosen mode
+  int conType = 1; //stores user indicated connection type, analog or usb (1 or 2)
+  int camType = 1; //stores user indicated camera type, aps-c or fullframe (1 or 2)
 
   //LAUNCH SPLASH SCREEN
   splashScreen(); //launches splash screen function
@@ -107,6 +109,25 @@ void loop() {
   lcd.print("mode pref "); //DELETE
   lcd.print(modePref); //DELETE
   delay(500); //DELETE!
+  
+  //GET CONNECTION TYPE
+  conType = getConType(); //gets connection type, analog or USB
+  
+  //TESTING CONTYPE DISPLAY DELETE!
+  lcd.clear(); //clears LCD DELETE
+  lcd.print("ConType "); //DELETE
+  lcd.print(conType); //DELETE
+  delay(500); //DELETE!
+  
+  //GET CAMERA TYPE
+  camType = getCamType(); //gets camera type, aps-c or fullframe
+  
+  //TESTING CAMTYPE DISPLAY DELETE!
+  lcd.clear(); //clears LCD DELETE
+  lcd.print("CamType "); //DELETE
+  lcd.print(camType); //DELETE
+  delay(500); //DELETE!
+  
 }
 
 /***************************************************************************
@@ -641,8 +662,163 @@ int getTrigPref(){
   return(modePref); //returns trigger preferences user requested to calling function
 }
 
+/***************************************************************************
+ *     Function Information
+ *     Name of Function: getConType
+ *     Function Return Type: int
+ * 
+ *     Parameters (list data type, name, and comment one per line):
+ *       1. Function accepts no parameters 
+ *
+ *     Function Description: Function requests user input for connection type 
+ *     (usb or analog). Connection type returned to calling function by integer
+ *     conType. (1 is analog, 2 is usb). 
+ ***************************************************************************/
+int getConType(){
+//INITIAL SETUP
+  uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
+  lcd.clear(); //clears LCD
+  lcd.setBacklight(WHITE); //white backlight
+  buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
 
+  //DECLARING & INITIALIZING VARIABLES
+  boolean loopcontrol = 0; //value for select button loop control
+  int lrTrack = 1; //tracks left/right clicks, possible values 1 2 3
+  int conType = 0; //stores value indicating connection type chosen by user, is returned to calling function
 
+  //PRINTING PANORAMA OPTIONS TO LCD
+  lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+  lcd.print("CONNECTION TYPE");
+  lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+  lcd.print("ANALOG  USB"); //prints to LCD
+
+  //INPUT LOOP - WAITING FOR SELECT BUTTON PRESS AND RELEASE
+  while(loopcontrol == 0){ //runs while select button not pressed
+    buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.  
+
+    //BUTTON TRACKING
+    //right button tracking
+    if(((buttons & BUTTON_RIGHT)>0) & ((lrTrack < 2)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack ++; //increment lrTrack by 1 
+      while(((buttons & BUTTON_RIGHT)>0) == 1){ //WAITS UNTIL RIGHT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //left button tracking
+    if(((buttons & BUTTON_LEFT)>0) & ((lrTrack > 1)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack --; //decrement by 1
+      while(((buttons & BUTTON_LEFT)>0) == 1){ //WAITS UNTIL LEFT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+
+    //SELECTING MODE
+    lcd.blink(); //blink cursor throughout entire program
+    switch (lrTrack) { //comparing case values with lrTrack
+    case 1: //executes if lrTrack = 1
+      lcd.setCursor(0, 1); //sets cursor to column 0, line 1 (analog)
+      conType = 1; //connection type is 1, analog
+      break;
+    case 2: //executes if lrTrack = 2
+      lcd.setCursor(8, 1); //sets cursor to column 8, line 1 (usb)
+      conType = 2; //connection type is 2, usb
+      break;
+    }
+
+    //STOPPING LOOP
+    if(buttons & BUTTON_SELECT) { //runs if ANY button is pressed AND BUTTON _SELECT = 1
+      buttons = lcd.readButtons(); //update state of pressed buttons. 1 if ANY button pressed, 0 if not. 
+      while((buttons & BUTTON_SELECT) == 1){ //WAITS UNTIL SELECT BUTTON RELEASED (otherwise future loops may register select button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      } 
+      loopcontrol = 1; //stops loop 
+    }
+  }
+
+  //WRAPPING UP
+  lcd.clear(); //clears LCD
+  lcd.noBlink(); //stop blinking!
+  return(conType); //returns real time video preferences user requested to calling function
+}
+
+/***************************************************************************
+ *     Function Information
+ *     Name of Function: getCamType
+ *     Function Return Type: int
+ * 
+ *     Parameters (list data type, name, and comment one per line):
+ *       1. Function accepts no parameters 
+ *
+ *     Function Description: Function requests user input for camera type - 
+ *     APS-C or fullframe. The camera type is stored as an integer in the 
+ *     camType variable and returned to the callig function.
+ ***************************************************************************/
+int getCamType(){
+//INITIAL SETUP
+  uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
+  lcd.clear(); //clears LCD
+  lcd.setBacklight(WHITE); //white backlight
+  buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+
+  //DECLARING & INITIALIZING VARIABLES
+  boolean loopcontrol = 0; //value for select button loop control
+  int lrTrack = 1; //tracks left/right clicks, possible values 1 2 3
+  int camType = 0; //stores value indicating connection type chosen by user, is returned to calling function
+
+  //PRINTING PANORAMA OPTIONS TO LCD
+  lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+  lcd.print("CAMERA TYPE");
+  lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+  lcd.print("APS-C FULLFRAME"); //prints to LCD
+
+  //INPUT LOOP - WAITING FOR SELECT BUTTON PRESS AND RELEASE
+  while(loopcontrol == 0){ //runs while select button not pressed
+    buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.  
+
+    //BUTTON TRACKING
+    //right button tracking
+    if(((buttons & BUTTON_RIGHT)>0) & ((lrTrack < 2)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack ++; //increment lrTrack by 1 
+      while(((buttons & BUTTON_RIGHT)>0) == 1){ //WAITS UNTIL RIGHT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //left button tracking
+    if(((buttons & BUTTON_LEFT)>0) & ((lrTrack > 1)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack --; //decrement by 1
+      while(((buttons & BUTTON_LEFT)>0) == 1){ //WAITS UNTIL LEFT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+
+    //SELECTING MODE
+    lcd.blink(); //blink cursor throughout entire program
+    switch (lrTrack) { //comparing case values with lrTrack
+    case 1: //executes if lrTrack = 1
+      lcd.setCursor(0, 1); //sets cursor to column 0, line 1 (APS-C)
+      camType = 1; //camera type is 1, APS-C
+      break;
+    case 2: //executes if lrTrack = 2
+      lcd.setCursor(6, 1); //sets cursor to column 6, line 1 (fullframe)
+      camType = 2; //camera type is 2, full frame
+      break;
+    }
+
+    //STOPPING LOOP
+    if(buttons & BUTTON_SELECT) { //runs if ANY button is pressed AND BUTTON _SELECT = 1
+      buttons = lcd.readButtons(); //update state of pressed buttons. 1 if ANY button pressed, 0 if not. 
+      while((buttons & BUTTON_SELECT) == 1){ //WAITS UNTIL SELECT BUTTON RELEASED (otherwise future loops may register select button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      } 
+      loopcontrol = 1; //stops loop 
+    }
+  }
+
+  //WRAPPING UP
+  lcd.clear(); //clears LCD
+  lcd.noBlink(); //stop blinking!
+  return(camType); //returns real time video preferences user requested to calling function
+}
 
 
 
