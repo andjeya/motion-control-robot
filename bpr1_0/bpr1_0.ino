@@ -89,6 +89,7 @@ void loop() {
   int modePref = 0; //stores user specified preferences for chosen mode
   int conType = 1; //stores user indicated connection type, analog or usb (1 or 2)
   int camType = 1; //stores user indicated camera type, aps-c or fullframe (1 or 2)
+  int lensLength = 0; //stores user indicated lens length
 
   //LAUNCH SPLASH SCREEN
   splashScreen(); //launches splash screen function
@@ -104,30 +105,38 @@ void loop() {
   //GET MODE PREFERENCES
   modePref = getModePref(mode); //passes desired mode to function to get preferences for that mode
 
-  //TESTING MODEPREF DISPLAY DELETE!
+    //TESTING MODEPREF DISPLAY DELETE!
   lcd.clear(); //clears LCD DELETE
   lcd.print("mode pref "); //DELETE
   lcd.print(modePref); //DELETE
   delay(500); //DELETE!
-  
+
   //GET CONNECTION TYPE
   conType = getConType(); //gets connection type, analog or USB
-  
+
   //TESTING CONTYPE DISPLAY DELETE!
   lcd.clear(); //clears LCD DELETE
   lcd.print("ConType "); //DELETE
   lcd.print(conType); //DELETE
   delay(500); //DELETE!
-  
+
   //GET CAMERA TYPE
   camType = getCamType(); //gets camera type, aps-c or fullframe
-  
-  //TESTING CAMTYPE DISPLAY DELETE!
+
+    //TESTING CAMTYPE DISPLAY DELETE!
   lcd.clear(); //clears LCD DELETE
   lcd.print("CamType "); //DELETE
   lcd.print(camType); //DELETE
   delay(500); //DELETE!
-  
+
+  //GET LENS LENGTH
+  lensLength = getLensLength(); //requests lens length from user
+
+  //TESTING LENSLENGTH DISPLAY DELETE!
+  lcd.clear(); //clears LCD DELETE
+  lcd.print("lensLength "); //DELETE
+  lcd.print(lensLength); //DELETE
+  delay(500); //DELETE!
 }
 
 /***************************************************************************
@@ -441,7 +450,7 @@ int getPanoPref(){
  *     later, right before the program runs. See variable documentation.
  ***************************************************************************/
 int getRtvPref(){
-//INITIAL SETUP
+  //INITIAL SETUP
   uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
   lcd.clear(); //clears LCD
   lcd.setBacklight(WHITE); //white backlight
@@ -521,7 +530,7 @@ int getRtvPref(){
  *     info on duration, speed, etc. See variable documentation.
  ***************************************************************************/
 int getTimelapsePref(){
-//INITIAL SETUP
+  //INITIAL SETUP
   uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
   lcd.clear(); //clears LCD
   lcd.setBacklight(WHITE); //white backlight
@@ -600,7 +609,7 @@ int getTimelapsePref(){
  *     later, right before the program runs. See variable documentation.
  ***************************************************************************/
 int getTrigPref(){
-//INITIAL SETUP
+  //INITIAL SETUP
   uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
   lcd.clear(); //clears LCD
   lcd.setBacklight(WHITE); //white backlight
@@ -675,7 +684,7 @@ int getTrigPref(){
  *     conType. (1 is analog, 2 is usb). 
  ***************************************************************************/
 int getConType(){
-//INITIAL SETUP
+  //INITIAL SETUP
   uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
   lcd.clear(); //clears LCD
   lcd.setBacklight(WHITE); //white backlight
@@ -754,7 +763,7 @@ int getConType(){
  *     camType variable and returned to the callig function.
  ***************************************************************************/
 int getCamType(){
-//INITIAL SETUP
+  //INITIAL SETUP
   uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
   lcd.clear(); //clears LCD
   lcd.setBacklight(WHITE); //white backlight
@@ -819,6 +828,101 @@ int getCamType(){
   lcd.noBlink(); //stop blinking!
   return(camType); //returns real time video preferences user requested to calling function
 }
+
+/***************************************************************************
+ *     Function Information
+ *     Name of Function: getLensLength
+ *     Function Return Type: int
+ * 
+ *     Parameters (list data type, name, and comment one per line):
+ *       1. Function accepts no parameters 
+ *
+ *     Function Description: Function requests mode from the user - panorama, 
+ *     HDR, timelapse or trigger. Function returns an integer to the calling function 
+ *     indicating which option the user selected. 
+ ***************************************************************************/
+int getLensLength(){
+  //INITIAL SETUP
+  uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
+  lcd.clear(); //clears LCD
+  lcd.setBacklight(WHITE); //white backlight
+  buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+
+  //DECLARING & INITIALIZING VARIABLES
+  boolean loopcontrol = 0; //value for select button loop control
+  int lensLength = 17; //returns user selected lens length, integer specifies mm
+  int updateScreen  = 0; //variable stores information on screen refresh - 0 screen should not refresh, 1 screen should refresh
+
+  //PRINTING MODE OPTIONS TO LCD
+  lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+  lcd.print("LENS LENGTH");
+  lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+  lcd.print(lensLength); //prints lens length
+  lcd.print(" mm"); //prints to LCD
+
+  //INPUT LOOP - WAITING FOR SELECT BUTTON PRESS AND RELEASE
+  while(loopcontrol == 0){ //runs while select button not pressed
+    buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.  
+
+    //BUTTON TRACKING
+    //up button tracking
+    if(((buttons & BUTTON_UP)>0) & ((lensLength <= (500-5))>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lensLength=lensLength+5; //increment lensLength by 5
+      updateScreen=1; //update screen when you get to the if statement
+      while(((buttons & BUTTON_UP)>0) == 1){ //WAITS UNTIL UP BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }      
+    //down button tracking
+    if(((buttons & BUTTON_DOWN)>0) & ((lensLength >= (10 + 5))>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lensLength=lensLength - 5; //decrement by 5
+      updateScreen=1; //update screen when you get to the if statement
+      while(((buttons & BUTTON_DOWN)>0) == 1){ //WAITS UNTIL DOWN BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //left button tracking
+    if(((buttons & BUTTON_LEFT)>0) & ((lensLength > 10)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lensLength --; //decrement by 1
+      updateScreen=1; //update screen when you get to the if statement
+      while(((buttons & BUTTON_LEFT)>0) == 1){ //WAITS UNTIL LEFT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //right button tracking
+    if(((buttons & BUTTON_RIGHT)>0) & ((lensLength < 500)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lensLength ++; //increment by 1
+      updateScreen=1; //update screen when you get to the if statement
+      while(((buttons & BUTTON_RIGHT)>0) == 1){ //WAITS UNTIL RIGHT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    } 
+    //redraw screen
+    if(updateScreen==1){ //redraws screen if a button has been pushed and update is required
+      lcd.clear(); //clears lcd
+      lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+      lcd.print("LENS LENGTH");
+      lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+      lcd.print(lensLength); //prints lens length
+      lcd.print(" mm"); //prints to LCD
+      updateScreen=0; //disables screen update on next loop
+    }
+    //stop loop when select button pressed
+    if(buttons & BUTTON_SELECT) { //runs if ANY button is pressed AND BUTTON _SELECT = 1
+      buttons = lcd.readButtons(); //update state of pressed buttons. 1 if ANY button pressed, 0 if not. 
+      while((buttons & BUTTON_SELECT) == 1){ //WAITS UNTIL SELECT BUTTON RELEASED (otherwise future loops may register select button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      } 
+      loopcontrol = 1; //stops loop 
+    }
+  }
+
+  //WRAPPING UP
+  lcd.clear(); //clears LCD
+  lcd.noBlink(); //stop blinking!
+  return(lensLength); //returns lens length to calling function 
+}
+
 
 
 
