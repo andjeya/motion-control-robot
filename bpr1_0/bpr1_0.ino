@@ -90,6 +90,7 @@ void loop() {
   int conType = 1; //stores user indicated connection type, analog or usb (1 or 2)
   int camType = 1; //stores user indicated camera type, aps-c or fullframe (1 or 2)
   int lensLength = 0; //stores user indicated lens length
+  int hdrPref = 1; //number of hdr brackets user specified
 
   //LAUNCH SPLASH SCREEN
   splashScreen(); //launches splash screen function
@@ -136,6 +137,14 @@ void loop() {
   lcd.clear(); //clears LCD DELETE
   lcd.print("lensLength "); //DELETE
   lcd.print(lensLength); //DELETE
+  delay(500); //DELETE!
+  
+  hdrPref = getHdrPref(); //requests number of hdr brackets from the user
+  
+  //TESTING HDRPREF DISPLAY DELETE!
+  lcd.clear(); //clears LCD DELETE
+  lcd.print("hdrPref "); //DELETE
+  lcd.print(hdrPref); //DELETE
   delay(500); //DELETE!
 }
 
@@ -923,6 +932,100 @@ int getLensLength(){
   return(lensLength); //returns lens length to calling function 
 }
 
+/***************************************************************************
+ *     Function Information
+ *     Name of Function: getHdrPref
+ *     Function Return Type: int
+ * 
+ *     Parameters (list data type, name, and comment one per line):
+ *       1. Function accepts no parameters 
+ *
+ *     Function Description: Function requests user input number of HDR brackets to take.
+ *     If 1 is selected, no HDR will be taken. Function returns number of brackets requested
+ *     stored in the hdrPref variable to the calling function.
+ ***************************************************************************/
+int getHdrPref(){
+  //INITIAL SETUP
+  uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
+  lcd.clear(); //clears LCD
+  lcd.setBacklight(WHITE); //white backlight
+  buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+
+  //DECLARING & INITIALIZING VARIABLES
+  boolean loopcontrol = 0; //value for select button loop control
+  int lrTrack = 1; //tracks left/right clicks, possible values 1 2 3
+  int hdrPref = 0; //stores value indicating number of HDR brackets chosen by user, is returned to calling function
+
+  //PRINTING PANORAMA OPTIONS TO LCD
+  lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+  lcd.print("# HDR BRACKETS");
+  lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+  lcd.print("1 2 3 5 7 9"); //prints to LCD
+
+  //INPUT LOOP - WAITING FOR SELECT BUTTON PRESS AND RELEASE
+  while(loopcontrol == 0){ //runs while select button not pressed
+    buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.  
+
+    //BUTTON TRACKING
+    //right button tracking
+    if(((buttons & BUTTON_RIGHT)>0) & ((lrTrack < 6)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack ++; //increment lrTrack by 1 
+      while(((buttons & BUTTON_RIGHT)>0) == 1){ //WAITS UNTIL RIGHT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //left button tracking
+    if(((buttons & BUTTON_LEFT)>0) & ((lrTrack > 1)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      lrTrack --; //decrement by 1
+      while(((buttons & BUTTON_LEFT)>0) == 1){ //WAITS UNTIL LEFT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+
+    //SELECTING MODE
+    lcd.blink(); //blink cursor throughout entire program
+    switch (lrTrack) { //comparing case values with lrTrack
+    case 1: //executes if lrTrack = 1
+      lcd.setCursor(0, 1); //sets cursor to column 0, line 1 (1 bracket)
+      hdrPref = 1; //No HDR (only 1 bracket)
+      break;
+    case 2: //executes if lrTrack = 2
+      lcd.setCursor(2, 1); //sets cursor to column 2, line 1 (2 brackets)
+      hdrPref = 2; //number of HDR brackets to take
+      break;
+    case 3: //executes if lrTrack =3
+      lcd.setCursor(4, 1); //sets cursor to column 4, line 1 (3 brackets)
+      hdrPref = 3; //number of HDR brackets to take
+      break;
+    case 4: //executes if lrTrack = 4
+      lcd.setCursor(6, 1); //sets cursor to column 6, line 1 (5 brackets)
+      hdrPref = 5; //number of HDR brackets to take
+      break;
+    case 5: //executes if lrTrack = 5
+      lcd.setCursor(8, 1); //sets cursor to column 8, line 1 (7 brackets)
+      hdrPref = 7; //number of HDR brackets to take
+      break;
+    case 6: //executes if lrTrack = 6
+      lcd.setCursor(10, 1); //sets cursor to column 10, line 1 (9 brackets)
+      hdrPref = 9; //number of HDR brackets to take
+      break;
+    }
+
+    //STOPPING LOOP
+    if(buttons & BUTTON_SELECT) { //runs if ANY button is pressed AND BUTTON _SELECT = 1
+      buttons = lcd.readButtons(); //update state of pressed buttons. 1 if ANY button pressed, 0 if not. 
+      while((buttons & BUTTON_SELECT) == 1){ //WAITS UNTIL SELECT BUTTON RELEASED (otherwise future loops may register select button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      } 
+      loopcontrol = 1; //stops loop 
+    }
+  }
+
+  //WRAPPING UP
+  lcd.clear(); //clears LCD
+  lcd.noBlink(); //stop blinking!
+  return(hdrPref); //returns hdr preferences user requested to calling function
+}
 
 
 
