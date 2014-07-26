@@ -91,6 +91,7 @@ void loop() {
   int camType = 1; //stores user indicated camera type, aps-c or fullframe (1 or 2)
   int lensLength = 0; //stores user indicated lens length
   int hdrPref = 1; //number of hdr brackets user specified
+  long baseShutter = -1L; //base shutter speed in uS, long type must be used because there are many digits
 
   //LAUNCH SPLASH SCREEN
   splashScreen(); //launches splash screen function
@@ -138,13 +139,25 @@ void loop() {
   lcd.print("lensLength "); //DELETE
   lcd.print(lensLength); //DELETE
   delay(500); //DELETE!
-  
+
+  //GET HDR PREF FROM USER
   hdrPref = getHdrPref(); //requests number of hdr brackets from the user
-  
+
   //TESTING HDRPREF DISPLAY DELETE!
   lcd.clear(); //clears LCD DELETE
   lcd.print("hdrPref "); //DELETE
   lcd.print(hdrPref); //DELETE
+  delay(500); //DELETE!
+
+  //GET BASE SHUTTER FROM USER
+  if(conType == 1 && hdrPref > 1){ //runs if connection is analog and HDR is specified
+    baseShutter = getBaseShutter(); //requests user for base shutter speed, value returned in uS
+  }
+
+  //TESTING GETBASESHUTTER DELETE!
+  lcd.clear(); //clears LCD DELETE
+  lcd.print("bSh "); //DELETE
+  lcd.print(baseShutter); //DELETE
   delay(500); //DELETE!
 }
 
@@ -1026,6 +1039,105 @@ int getHdrPref(){
   lcd.noBlink(); //stop blinking!
   return(hdrPref); //returns hdr preferences user requested to calling function
 }
+
+/***************************************************************************
+ *     Function Information
+ *     Name of Function: getBaseShutter
+ *     Function Return Type: long baseShutter
+ *     Parameters (list data type, name, and comment one per line):
+ *       1. function accepts no parameters
+ *
+ *     Function Description: Function requests base shutter from user and returns 
+ *     base shutter speed as a long value to calling function in microseconds (10^-6 seconds)! 
+ *     IMPORTANT: If you intend to use the value in microseconds for delay, you may 
+ *     use the delayMicroseconds() function to handle values from 3 uS to 16383 uS. 
+ *     For larger values, you should use the delay() function which accepts values in mS. 
+ ***************************************************************************/
+long getBaseShutter(){
+  //INITIAL SETUP
+  uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
+  lcd.clear(); //clears LCD
+  lcd.setBacklight(WHITE); //white backlight
+  buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+
+  //DECLARING & INITIALIZING VARIABLES
+  boolean loopcontrol = 0; //value for select button loop control
+  long baseShutter = 12500L; //value for base shutter in uS calculated from selected shutter speed in seconds, default 1/80s, returned to calling function
+  int arrayPosition = 34; //index of array to be incremented by button presses, default value of 34 references 1/80 shutter speed
+  const char *shutterStrings[55] = {"30","25","20","15","13","10","8","6","5","4","3.2","2.5","2","1.6","1.3","1","0.8","0.6","0.5","0.4","0.3","1/4","1/5","1/6","1/8","1/10","1/13","1/15","1/20","1/25","1/30","1/40","1/50","1/60","1/80","1/100","1/125","1/160","1/200","1/250","1/320","1/400","1/500","1/640","1/800","1/1000","1/1250","1/1600","1/2000","1/2500","1/3200","1/4000","1/5000","1/6400","1/8000"}; //shutter strings to print. This code allocates an array of two pointers to const char - pointers will be set to the addresses of the static strings.
+  float baseShutterArray[55] = {30,25,20,15,13,10,8,6,5,4,3.2,2.5,2,1.6,1.3,1,.8,.6,.5,.4,.3,.25,.2,.16666666,.125,.1,.07692308,.06666666,.05,.04,.03333333,.025,.02,.01666666,.0125,.01,.008,.00625,.005,.004,.003125,.0025,.002,.0015625,.00125,.001,.0008,.000625,.0005,.0004,.0003125,.00025,.0002,.00015625,.000125}; //base shutter values
+  int updateScreen  = 0; //variable stores information on screen refresh - 0 screen should not refresh, 1 screen should refresh
+
+  //PRINTING MODE OPTIONS TO LCD
+  lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+  lcd.print("SEL BASE SHUTTER");
+  lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+  lcd.print(shutterStrings[arrayPosition]); //prints selected shutter speed
+  lcd.print("s"); //prints to LCD
+
+  //INPUT LOOP - WAITING FOR SELECT BUTTON PRESS AND RELEASE
+  while(loopcontrol == 0){ //runs while select button not pressed
+    buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.  
+    //BUTTON TRACKING
+    //up button tracking
+    if(((buttons & BUTTON_UP)>0) & ((arrayPosition <= (54-5))>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      arrayPosition=arrayPosition+5; //increment arrayPosition by 5
+      updateScreen=1; //update screen when you get to the if statement
+      while(((buttons & BUTTON_UP)>0) == 1){ //WAITS UNTIL UP BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }      
+    //down button tracking
+    if(((buttons & BUTTON_DOWN)>0) & ((arrayPosition >= (0 + 5))>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      arrayPosition=arrayPosition - 5; //decrement by 5
+      updateScreen=1; //update screen when you get to the if statement
+      while(((buttons & BUTTON_DOWN)>0) == 1){ //WAITS UNTIL DOWN BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //left button tracking
+    if(((buttons & BUTTON_LEFT)>0) & ((arrayPosition > 0)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      arrayPosition --; //decrement by 1
+      updateScreen=1; //update screen when you get to the if statement
+      while(((buttons & BUTTON_LEFT)>0) == 1){ //WAITS UNTIL LEFT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //right button tracking
+    if(((buttons & BUTTON_RIGHT)>0) & ((arrayPosition < 54)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      arrayPosition ++; //increment by 1
+      updateScreen=1; //update screen when you get to the if statement
+      while(((buttons & BUTTON_RIGHT)>0) == 1){ //WAITS UNTIL RIGHT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    } 
+    //redraw screen
+    if(updateScreen==1){ //redraws screen if a button has been pushed and update is required
+      lcd.clear(); //clears lcd
+      lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+      lcd.print("SEL BASE SHUTTER");
+      lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+      lcd.print(shutterStrings[arrayPosition]); //prints current base shutter value
+      lcd.print("s"); //prints to LCD
+      updateScreen=0; //disables screen update on next loop
+    }
+    //stop loop when select button pressed
+    if(buttons & BUTTON_SELECT) { //runs if ANY button is pressed AND BUTTON _SELECT = 1
+      buttons = lcd.readButtons(); //update state of pressed buttons. 1 if ANY button pressed, 0 if not. 
+      while((buttons & BUTTON_SELECT) == 1){ //WAITS UNTIL SELECT BUTTON RELEASED (otherwise future loops may register select button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      } 
+      loopcontrol = 1; //stops loop 
+    }
+  }
+
+  //WRAPPING UP
+  lcd.clear(); //clears LCD
+  lcd.noBlink(); //stop blinking!  
+  baseShutter = ((baseShutterArray[arrayPosition])*1000000); //converting seconds to microseconds, chopping off any decimals
+  return(baseShutter); //returns base shutter value to calling function in microseconds 1250
+}
+
 
 
 
