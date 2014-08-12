@@ -92,11 +92,12 @@ void loop() {
   int lensLength = 0; //stores user indicated lens length
   int hdrPref = 1; //number of hdr brackets user specified
   long baseShutter = -1L; //base shutter speed in uS, long type must be used because there are many digits
+  int shutDelay = 250; //shutter delay in milliseconds specified by user, default value 250 ms
 
   //LAUNCH SPLASH SCREEN
   splashScreen(); //launches splash screen function
 
-    //GET MODE (panorama, hdr, rtv, timelapse or trig)
+  //GET MODE (panorama, hdr, rtv, timelapse or trig)
   mode = getMode(); //gets user input for desired mode of robot
 
   //TESTING MODE DISPLAY DELETE!
@@ -107,7 +108,7 @@ void loop() {
   //GET MODE PREFERENCES
   modePref = getModePref(mode); //passes desired mode to function to get preferences for that mode
 
-    //TESTING MODEPREF DISPLAY DELETE!
+  //TESTING MODEPREF DISPLAY DELETE!
   lcd.clear(); //clears LCD DELETE
   lcd.print("mode pref "); //DELETE
   lcd.print(modePref); //DELETE
@@ -125,7 +126,7 @@ void loop() {
   //GET CAMERA TYPE
   camType = getCamType(); //gets camera type, aps-c or fullframe
 
-    //TESTING CAMTYPE DISPLAY DELETE!
+  //TESTING CAMTYPE DISPLAY DELETE!
   lcd.clear(); //clears LCD DELETE
   lcd.print("CamType "); //DELETE
   lcd.print(camType); //DELETE
@@ -159,6 +160,16 @@ void loop() {
   lcd.print("bSh "); //DELETE
   lcd.print(baseShutter); //DELETE
   delay(500); //DELETE!
+  
+  //GET SHUTTER DELAY
+  if(conType==1){ //runs if connection type is analog
+    shutDelay = getShutDelay(); //get shutter delay from calling function
+  }
+  
+  //TESTING SHUTTER DELAY DELETE!
+  lcd.clear(); //clears LCD DELETE
+  lcd.print(shutDelay); //DELETE
+  delay(1000); //DELETE!  
 }
 
 /***************************************************************************
@@ -1138,6 +1149,102 @@ long getBaseShutter(){
   return(baseShutter); //returns base shutter value to calling function in microseconds 1250
 }
 
+/***************************************************************************
+ *     Function Information
+ *     Name of Function: getShutDelay
+ *     Function Return Type: int
+ * 
+ *     Parameters (list data type, name, and comment one per line):
+ *       1. Function accepts no parameters 
+ *
+ *     Function Description: Function requests shutter delay from the user 
+ *     ranging from 0 to 30 seconds in increments of .25 seconds. Function 
+ *     returns an integer to the calling function indicating the desired 
+ *     delay in milliseconds. Default delay of .25 seconds.
+ ***************************************************************************/
+int getShutDelay(){
+  //INITIAL SETUP
+  uint8_t buttons = lcd.readButtons(); //initializing values for input from buttons
+  lcd.clear(); //clears LCD
+  lcd.setBacklight(WHITE); //white backlight
+  buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+
+  //DECLARING & INITIALIZING VARIABLES
+  boolean loopcontrol = 0; //value for select button loop control
+  float floatShutDelay = 0.25; //shutter delay displayed on user screen in seconds
+  int shutDelay = 1000*floatShutDelay; //shutter delay returned to calling function in milliseconds. 
+  int updateScreen  = 0; //variable stores information on screen refresh - 0 screen should not refresh, 1 screen should refresh
+
+  //PRINTING MODE OPTIONS TO LCD
+  lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+  lcd.print("SHUTTER DELAY");
+  lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+  lcd.print(floatShutDelay); //prints shutter delay in seconds
+  lcd.print(" seconds"); //prints to LCD
+
+  //INPUT LOOP - WAITING FOR SELECT BUTTON PRESS AND RELEASE
+  while(loopcontrol == 0){ //runs while select button not pressed
+    buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.  
+    
+    //BUTTON TRACKING
+    //up button tracking
+    if(((buttons & BUTTON_UP)>0) & ((shutDelay <= (30000-1000))>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      shutDelay=shutDelay+1000; //increment shutter delay by 1 second (1000 milliseconds)
+      updateScreen=1; //update screen when you get to the if statement
+      while(((buttons & BUTTON_UP)>0) == 1){ //WAITS UNTIL UP BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }      
+    //down button tracking
+    if(((buttons & BUTTON_DOWN)>0) & ((shutDelay >= (0 + 1000))>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      shutDelay=shutDelay - 1000; //decrement by 1 second (1000 milliseconds)
+      updateScreen=1; //update screen when you get to the if statement
+      while(((buttons & BUTTON_DOWN)>0) == 1){ //WAITS UNTIL DOWN BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //left button tracking
+    if(((buttons & BUTTON_LEFT)>0) & ((shutDelay > 10)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      shutDelay=shutDelay-250; //decrement by .25 seconds, 250 milliseconds
+      updateScreen=1; //update screen when you get to the if statement
+      while(((buttons & BUTTON_LEFT)>0) == 1){ //WAITS UNTIL LEFT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    }
+    //right button tracking
+    if(((buttons & BUTTON_RIGHT)>0) & ((shutDelay < 30000)>0)){ //normalizes important arguments to 1 if true, 0 if false for comparison
+      shutDelay=shutDelay+250; //increment by .25 seconds, 250 milliseconds
+      updateScreen=1; //update screen when you get to the if statement
+      while(((buttons & BUTTON_RIGHT)>0) == 1){ //WAITS UNTIL RIGHT BUTTON RELEASED (otherwise future loops may register button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      }
+    } 
+    //redraw screen
+    if(updateScreen==1){ //redraws screen if a button has been pushed and update is required
+      floatShutDelay = (float)shutDelay/1000; //converts delay in milliseconds to seconds for printing, typecasting from int to float
+      lcd.clear(); //clears lcd
+      lcd.setCursor(0, 0); //sets cursor to column 0, line 0 
+      lcd.print("SHUTTER DELAY");
+      lcd.setCursor(0, 1); //sets cursor to next line - column 0, line 1 (note: line 1 is the second row, since counting begins with 0)
+      lcd.print(floatShutDelay); //prints shutter delay in seconds
+      lcd.print(" seconds"); //prints to LCD
+      updateScreen=0; //disables screen update on next loop
+    }
+    //stop loop when select button pressed
+    if(buttons & BUTTON_SELECT) { //runs if ANY button is pressed AND BUTTON _SELECT = 1
+      buttons = lcd.readButtons(); //update state of pressed buttons. 1 if ANY button pressed, 0 if not. 
+      while((buttons & BUTTON_SELECT) == 1){ //WAITS UNTIL SELECT BUTTON RELEASED (otherwise future loops may register select button!)
+        buttons = lcd.readButtons(); //updates state of pressed buttons. 1 if ANY button pressed, 0 if not.
+      } 
+      loopcontrol = 1; //stops loop 
+    }
+  }
+  
+  //WRAPPING UP
+  lcd.clear(); //clears LCD
+  lcd.noBlink(); //stop blinking!
+  return(shutDelay); //returns shutter delay in milliseconds to the calling function 
+}
 
 
 
